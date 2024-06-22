@@ -26,7 +26,7 @@ const QuestionOverview: React.FC = () => {
   const fetchQuestion = async () => {
     try {
       const response = await sendRequest<{ question: QuestionTypeSec[] }>(
-        `http://localhost:8765/qanda/questions/getquestion/${qid}`,
+        `https://askmeback.onrender.com/qanda/questions/getquestion/${qid}`,
         "GET",
         null,
         {
@@ -41,7 +41,7 @@ const QuestionOverview: React.FC = () => {
       const relatedTagsPromises = question.tagsObjId.map(async (tagId) => {
         try {
           const tagResponse = await sendRequest<{ tag: TagReturnType }>(
-            `http://localhost:8765/qanda/tags/${tagId}`,
+            `https://askmeback.onrender.com/qanda/tags/${tagId}`,
             "GET",
             null,
             {

@@ -16,7 +16,7 @@ const Browse = () => {
   const fetchBrowseQuestions = async () => {
     try {
       await axios
-        .get(`http://localhost:8765/qanda/questions/browse`)
+        .get(`https://askmeback.onrender.com/qanda/questions/browse`)
         .then((res) => {
           setBrowseQuestions(res.data);
         })

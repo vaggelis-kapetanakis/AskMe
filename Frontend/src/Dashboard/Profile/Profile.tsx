@@ -43,7 +43,7 @@ const Profile = () => {
         .get<{
           _answeredTags: TagProfileType[];
           _questionTags: TagProfileType[];
-        }>(`http://localhost:8765/qanda/tags/user/${state.user.userId}`, {
+        }>(`https://askmeback.onrender.com/qanda/tags/user/${state.user.userId}`, {
           headers: {
             Authorization: `Bearer ${state.user.token}`,
           },
@@ -93,7 +93,7 @@ const Profile = () => {
   const changeUserValues = async () => {
     try {
       await axios.post(
-        `http://localhost:8765/qanda/users/updateuser`,
+        `https://askmeback.onrender.com/qanda/users/updateuser`,
         {
           oldUsername: state.user.username,
           newUsername: newEntries.username,

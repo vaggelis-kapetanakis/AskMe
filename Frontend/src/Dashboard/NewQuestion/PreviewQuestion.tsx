@@ -32,7 +32,7 @@ const PreviewQuestion = (props: PreviewTypes) => {
     try {
       await axios
         .post(
-          "http://localhost:8765/qanda/questions/newquestion",
+          "https://askmeback.onrender.com/qanda/questions/newquestion",
           JSON.stringify({
             title: props.data.title,
             body: props.data.body,

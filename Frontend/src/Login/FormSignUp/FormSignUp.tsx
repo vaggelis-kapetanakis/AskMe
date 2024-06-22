@@ -18,7 +18,7 @@ const FormSignUp = ({
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:8765/qanda/users/signup",
+        "https://askmeback.onrender.com/qanda/users/signup",
         values
       );
       const userData = response.data;

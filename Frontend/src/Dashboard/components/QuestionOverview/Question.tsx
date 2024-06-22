@@ -1,7 +1,7 @@
 import { BsPerson } from "react-icons/bs";
 import { IoIosArrowDropup, IoIosArrowDropdown } from "react-icons/io";
 import { Markup } from "interweave";
-import { QuestionType, QuestionTypeSec } from "../../../types/global";
+import { QuestionTypeSec } from "../../../types/global";
 import { useContext, useState } from "react";
 import Loading from "../../../ui/Loading";
 import { AuthContext } from "../../../contexts/AuthContext";
@@ -32,7 +32,7 @@ const Question = ({ quest }: { quest: QuestionTypeSec }) => {
   const handleQuestVote = async (vote: number, whatButton: string) => {
     setLoading(true);
     const { data: hasVoted } = await axios.get(
-      `http://localhost:8765/qanda/questions/isquestionvoted/${quest._id}/${state.user.userId}/${vote}`,
+      `https://askmeback.onrender.com/qanda/questions/isquestionvoted/${quest._id}/${state.user.userId}/${vote}`,
       {
         headers: {
           Authorization: `Bearer ${state.user.token}`,

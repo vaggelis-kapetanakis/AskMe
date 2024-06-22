@@ -15,7 +15,7 @@ const fetchQuestions = async ({
   userToken: string;
 }) => {
   const { data } = await axios.get(
-    `http://localhost:8765/qanda/questions/getlimit/${pageParam}`,
+    `https://askmeback.onrender.com/qanda/questions/getlimit/${pageParam}`,
     {
       headers: {
         Authorization: `Bearer ${userToken}`,

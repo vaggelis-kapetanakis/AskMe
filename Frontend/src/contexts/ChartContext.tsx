@@ -56,7 +56,7 @@ const ChartProvider: React.FC<ChartProviderProps> = ({ children }) => {
   const fetchChartData = async (userId: string) => {
     try {
       const response = await axios.get(
-        `http://localhost:8765/qanda/charts/user/${userId}`
+        `https://askmeback.onrender.com/qanda/charts/user/${userId}`
       );
       chartDispatch({ type: "SET_CHART_DATA", payload: response.data });
       localStorage.setItem("chartData", JSON.stringify(response.data));

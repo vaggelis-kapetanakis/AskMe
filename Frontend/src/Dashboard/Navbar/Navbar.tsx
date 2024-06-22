@@ -25,7 +25,7 @@ const Navbar = () => {
     try {
       await axios
         .delete(
-          "http://localhost:8765/qanda/notifications/deletenotification",
+          "https://askmeback.onrender.com/qanda/notifications/deletenotification",
           {
             data: {
               username: state.user.username,

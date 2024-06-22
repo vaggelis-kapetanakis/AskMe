@@ -5,14 +5,14 @@ import {
   TagReturnType,
 } from "../types/global";
 
-const API_URL = "http://localhost:8765/qanda";
+const API_URL = "https://askmeback.onrender.com/qanda";
 
 export const useTopQuestions = (userToken: string | null) => {
   return useQuery({
     queryKey: ["topQuestions"],
     queryFn: async () => {
       const { data } = await axios.get(
-        "http://localhost:8765/qanda/questions/filter",
+        "https://askmeback.onrender.com/qanda/questions/filter",
         {
           headers: {
             Authorization: `Bearer ${userToken}`,
@@ -31,7 +31,7 @@ export const usePopularTags = (userToken: string) => {
     queryKey: ["popularTags"],
     queryFn: async () => {
       const { data } = await axios.get(
-        "http://localhost:8765/qanda/tags/popular/tags",
+        "https://askmeback.onrender.com/qanda/tags/popular/tags",
         {
           headers: {
             Authorization: `Bearer ${userToken}`,
@@ -75,7 +75,7 @@ export const useSearchQuestions = (userToken: string) => {
     queryKey: ["searchQuestions"],
     queryFn: async () => {
       const { data } = await axios.get(
-        "http://localhost:8765/qanda/questions/searchquestions",
+        "https://askmeback.onrender.com/qanda/questions/searchquestions",
         {
           headers: {
             Authorization: `Bearer ${userToken}`,
@@ -96,7 +96,7 @@ export const fetchAnswers = (userToken: string, questionID: string) => {
     queryKey: ["fetchAnswers", questionID],
     queryFn: async () => {
       const { data } = await axios.get<AnswerType[]>(
-        `http://localhost:8765/qanda/answers/${questionID}`,
+        `https://askmeback.onrender.com/qanda/answers/${questionID}`,
         {
           headers: {
             Authorization: `Bearer ${userToken}`,
@@ -172,7 +172,7 @@ export const answerDelete = (
     queryKey: ["answerDelete", answerID, questionID],
     queryFn: async () => {
       const { data } = await axios.delete(
-        `http://localhost:8765/qanda/answers/deleteanswer`,
+        `https://askmeback.onrender.com/qanda/answers/deleteanswer`,
         {
           data: {
             answerID: answerID,
@@ -201,7 +201,7 @@ export const fetchTagById = (tagID: string, userToken: string) => {
     queryKey: ["answerDelete", tagID, userToken],
     queryFn: async () => {
       const { data } = await axios.get<{ tag: TagReturnType[] }>(
-        `http://localhost:8765/qanda/tags/${tagID}`,
+        `https://askmeback.onrender.com/qanda/tags/${tagID}`,
         {
           headers: {
             Authorization: `Bearer ${userToken}`,

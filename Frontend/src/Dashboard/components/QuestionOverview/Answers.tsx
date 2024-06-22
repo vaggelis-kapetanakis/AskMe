@@ -76,7 +76,7 @@ const Answers = ({
   ) => {
     setLoading(true);
     const { data: hasVoted } = await axios.get(
-      `http://localhost:8765/qanda/answers/isanswervoted/${answerID}/${state.user.userId}/${vote}`,
+      `https://askmeback.onrender.com/qanda/answers/isanswervoted/${answerID}/${state.user.userId}/${vote}`,
       {
         headers: {
           Authorization: `Bearer ${state.user.token}`,
