@@ -27,7 +27,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // CORS Configuration
 const corsOptions: cors.CorsOptions = {
-  origin: "http://localhost:5173", // Replace with your frontend URL
+  origin: "https://askme-vagkap.netlify.app/", // Replace with your frontend URL
   methods: "GET,POST,PATCH,DELETE",
   allowedHeaders:
     "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Content-Type-Options",
