@@ -2,21 +2,16 @@ import { BsPerson } from "react-icons/bs";
 import { IoIosArrowDropup, IoIosArrowDropdown } from "react-icons/io";
 import { Markup } from "interweave";
 import { QuestionTypeSec } from "../../../types/global";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import Loading from "../../../ui/Loading";
-import { AuthContext } from "../../../contexts/AuthContext";
-import { questionVote } from "../../../utils/questionReqs";
+import { useQuestionVote } from "../../../utils/questionReqs";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import notifierMiddleware from "../../../ui/notifierMiddleware";
+import { useAuth } from "../../../contexts/useAuth";
 
 const Question = ({ quest }: { quest: QuestionTypeSec }) => {
-  const authContext = useContext(AuthContext);
-  if (!authContext) {
-    return <Loading />;
-  }
-
-  const { state } = authContext;
+  const { state } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [votes, setVotes] = useState<number>(quest.votes);
   const [votesState, setVotesState] = useState<{
@@ -27,12 +22,12 @@ const Question = ({ quest }: { quest: QuestionTypeSec }) => {
     buttonUpClicked: false,
   });
 
-  const voteMutation = questionVote(state.user.token);
+  const voteMutation = useQuestionVote(state.user.token);
 
   const handleQuestVote = async (vote: number, whatButton: string) => {
     setLoading(true);
     const { data: hasVoted } = await axios.get(
-      `https://askmeback.onrender.com/qanda/questions/isquestionvoted/${quest._id}/${state.user.userId}/${vote}`,
+      `${import.meta.env.VITE_APP_BACKEND_URL}/questions/isquestionvoted/${quest._id}/${state.user.userId}/${vote}`,
       {
         headers: {
           Authorization: `Bearer ${state.user.token}`,

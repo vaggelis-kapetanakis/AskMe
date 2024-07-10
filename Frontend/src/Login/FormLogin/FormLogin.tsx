@@ -1,111 +1,116 @@
-import { useContext } from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import axios from "axios";
-import { AuthContext } from "../../contexts/AuthContext";
+import React from "react";
+import { Formik, Form, Field, ErrorMessage, FormikHelpers } from "formik";
+import axios, { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
+
+import { useAuth } from "../../contexts/useAuth";
 import { loginSchema } from "../../utils/validationSchema";
 import Button from "../../ui/Button";
-import { useNavigate } from "react-router-dom";
-import { ChartContext } from "../../contexts/ChartContext";
+import { AuthProps } from "../../types/authTypes";
+import { useChart } from "../../contexts/useChart";
+import { toast } from "react-toastify";
 
-const FormLogin = ({
-  setLoading,
-}: {
+interface LoginValues {
+  username: string;
+  password: string;
+}
+
+interface FormLoginProps {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
-  const authContext = useContext(AuthContext);
-  const chartContext = useContext(ChartContext);
+}
+
+const FormLogin: React.FC<FormLoginProps> = ({ setLoading }) => {
+  const { login } = useAuth();
+  const { fetchChartData } = useChart();
   const navigate = useNavigate();
 
-  const handleLogin = async (values: any) => {
+  const handleLogin = async (
+    values: LoginValues,
+    { setSubmitting }: FormikHelpers<LoginValues>
+  ) => {
     setLoading(true);
     try {
-      const response = await axios.patch(
-        "https://askmeback.onrender.com/qanda/users/login",
+      const { data } = await axios.patch<AuthProps>(
+        `${import.meta.env.VITE_APP_BACKEND_URL}/users/login`,
         values
       );
-      const userData = response.data;
-      authContext?.login(userData);
-
-      // Fetch additional user data
-      if (chartContext) {
-        chartContext.fetchChartData(userData.userId);
-      }
-
-      // Navigate to /signedin after successful login
+      login(data);
+      await fetchChartData(data.userId);
       navigate("/signedin");
-      setLoading(false);
     } catch (error) {
-      console.error("Login failed:", error);
+      if (error instanceof AxiosError && error.response) {
+        toast.error(error.response.data.message);
+      } else if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        console.error("Login failed:", error);
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   return (
-    <>
-      <Formik
-        initialValues={{ username: "", password: "" }}
-        validationSchema={loginSchema}
-        onSubmit={handleLogin}
-      >
-        {({ isSubmitting }) => (
-          <Form className="bg-white/20 p-20 rounded-xl">
-            <div className="flex items-start justify-center flex-col mb-5">
-              <label className="text-xl" htmlFor="username">
-                Username
-              </label>
-              <Field
-                className="bg-white/40 rounded-lg w-96 pl-1 py-1"
-                type="username"
-                name="username"
-              />
-              <ErrorMessage
-                className="text-red-500 mt-1"
-                name="username"
-                component="div"
-              />
-            </div>
-            <div className="flex items-start justify-center flex-col mb-5">
-              <label className="text-xl" htmlFor="password">
-                Password
-              </label>
-              <Field
-                className="bg-white/40 rounded-lg w-96 pl-1 py-1"
-                type="password"
-                name="password"
-              />
-              <ErrorMessage
-                className="text-red-500 mt-1 break-words"
-                name="password"
-                component="div"
-              />
-            </div>
-            {/* <div className="flex items-start justify-center flex-col mb-5">
-              <label className="flex items-center justify-center">
-                <Field
-                  className="w-5 h-5 mr-3"
-                  type="checkbox"
-                  name="rememberMe"
-                />
-                Remember Me
-              </label>
-            </div> */}
-            <Button
-              buttonVariant="solid"
-              buttonStyle={{
-                color: "primary",
-                vPadding: "sm",
-                rounded: "lg",
-                size: "lg",
-              }}
-              type="submit"
-              disabled={isSubmitting}
-            >
-              Login
-            </Button>
-          </Form>
-        )}
-      </Formik>
-    </>
+    <Formik
+      initialValues={{ username: "", password: "" }}
+      validationSchema={loginSchema}
+      onSubmit={handleLogin}
+    >
+      {({ isSubmitting }) => (
+        <Form className="bg-white/20 p-20 rounded-xl">
+          <FormField name="username" label="Username" type="text" />
+          <FormField name="password" label="Password" type="password" />
+          <LoginButton isSubmitting={isSubmitting} />
+        </Form>
+      )}
+    </Formik>
   );
 };
+
+interface FormFieldProps {
+  name: string;
+  label: string;
+  type: string;
+}
+
+const FormField: React.FC<FormFieldProps> = ({ name, label, type }) => (
+  <div className="flex items-start justify-center flex-col mb-5">
+    <label className="text-xl" htmlFor={name}>
+      {label}
+    </label>
+    <Field
+      className="bg-white/40 rounded-lg w-96 pl-1 py-1"
+      type={type}
+      name={name}
+    />
+    <ErrorMessage
+      className="text-red-500 mt-1 break-words"
+      name={name}
+      component="div"
+    />
+  </div>
+);
+
+interface LoginButtonProps {
+  isSubmitting: boolean;
+}
+
+const LoginButton: React.FC<LoginButtonProps> = ({ isSubmitting }) => (
+  <Button
+    buttonVariant="solid"
+    buttonStyle={{
+      color: "primary",
+      vPadding: "sm",
+      rounded: "lg",
+      size: "lg",
+    }}
+    type="submit"
+    disabled={isSubmitting}
+  >
+    Login
+  </Button>
+);
 
 export default FormLogin;

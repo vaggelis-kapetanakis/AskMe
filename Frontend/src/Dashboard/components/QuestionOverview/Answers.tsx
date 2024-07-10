@@ -1,20 +1,20 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import Loading from "../../../ui/Loading";
-import { AuthContext } from "../../../contexts/AuthContext";
 import { BsPerson } from "react-icons/bs";
 import { IoIosArrowDropup, IoIosArrowDropdown } from "react-icons/io";
 import { Markup } from "interweave";
 import EditorComp from "../../../ui/EditorComp";
 import Button from "../../../ui/Button";
-import {
-  answerVote,
-  fetchAnswers,
-  submitAnswer,
-} from "../../../utils/questionReqs";
 import ErrorModal from "../../../ui/ErrorModal";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import notifierMiddleware from "../../../ui/notifierMiddleware";
+import { useAuth } from "../../../contexts/useAuth";
+import {
+  useAnswerVote,
+  useFetchAnswers,
+  useSubmitAnswer,
+} from "../../../utils/questionReqs";
 
 type AnswerProps = {
   qid: string;
@@ -33,6 +33,7 @@ const Answers = ({
   tags,
   title,
 }: AnswerProps) => {
+  const { state } = useAuth();
   const [editorContent, setEditorContent] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [votesState, setVotesState] = useState<{
@@ -52,22 +53,16 @@ const Answers = ({
     setEditorContent(content);
   };
 
-  const authContext = useContext(AuthContext);
-  if (!authContext) {
-    return <Loading />;
-  }
-
-  const { state } = authContext;
   const queryClient = useQueryClient();
 
   const {
     data: answerData,
     isLoading: answerLoading,
     error: answerError,
-  } = fetchAnswers(state.user.token, qid);
+  } = useFetchAnswers(state.user.token, qid);
 
-  const voteMutation = answerVote(state.user.token);
-  const submitMutation = submitAnswer(state.user.token);
+  const voteMutation = useAnswerVote(state.user.token);
+  const submitMutation = useSubmitAnswer(state.user.token);
 
   const handleAnswerVote = async (
     answerID: string,
@@ -76,7 +71,7 @@ const Answers = ({
   ) => {
     setLoading(true);
     const { data: hasVoted } = await axios.get(
-      `https://askmeback.onrender.com/qanda/answers/isanswervoted/${answerID}/${state.user.userId}/${vote}`,
+      `${import.meta.env.VITE_APP_BACKEND_URL}/answers/isanswervoted/${answerID}/${state.user.userId}/${vote}`,
       {
         headers: {
           Authorization: `Bearer ${state.user.token}`,

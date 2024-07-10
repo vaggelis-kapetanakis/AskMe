@@ -1,5 +1,3 @@
-import { CSSProperties, ReactNode } from "react";
-
 export type IUserCount = {
   _id: string;
   count?: number;

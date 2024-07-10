@@ -1,133 +1,72 @@
-import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../contexts/AuthContext";
-import Loading from "../../ui/Loading";
+import React, { useEffect, useState, useCallback } from "react";
 import { BsBell, BsPerson, BsX } from "react-icons/bs";
 import { Markup } from "interweave";
 import { NotificationType } from "../../types/global";
 import QuestSearch from "./QuestSearch";
 import axios from "axios";
+import { useAuth } from "../../contexts/useAuth";
 
-const Navbar = () => {
-  const authContext = useContext(AuthContext);
-  const [notifications, setNotifications] = useState<"none" | "positive">(
-    "none"
-  );
-  const [dropdown, setDropdown] = useState<boolean>(false);
+const Navbar: React.FC = () => {
+  const { state } = useAuth();
+  const [hasNotifications, setHasNotifications] = useState(false);
+  const [dropdown, setDropdown] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationType[]>([]);
 
-  if (!authContext) {
-    return <Loading />;
-  }
+  useEffect(() => {
+    if (state.user.notifications && state.user.notifications.length > 0) {
+      setHasNotifications(true);
+      setNotifications(state.user.notifications);
+    } else {
+      setHasNotifications(false);
+      setNotifications([]);
+    }
+  }, [state.user.notifications]);
 
-  const { state } = authContext;
-  const [alteredNot, setAlteredNot] = useState(state.user.notifications);
-
-  const handleDeleteNotification = async (notification: NotificationType) => {
-    try {
-      await axios
-        .delete(
-          "https://askmeback.onrender.com/qanda/notifications/deletenotification",
+  const handleDeleteNotification = useCallback(
+    async (notificationId: string) => {
+      try {
+        await axios.delete(
+          `${import.meta.env.VITE_APP_BACKEND_URL}/notifications/deletenotification`,
           {
             data: {
               username: state.user.username,
-              notificationID: notification._id,
+              notificationID: notificationId,
             },
             headers: {
               Authorization: `Bearer ${state.user.token}`,
               "X-Content-Type-Options": "nosniff",
             },
           }
-        )
-        .then((res) => console.log(res))
-        .catch((err) => console.log(err));
-      var removeIndex = state.user.notifications
-        .map(function (item) {
-          return item._id;
-        })
-        .indexOf(notification._id);
-      state.user.notifications.splice(removeIndex, 1);
-      setAlteredNot(state.user.notifications);
-      let userData = localStorage.getItem("user");
-      if (!userData) return;
-      let value = JSON.parse(userData);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          userId: value.userId,
-          token: value.token,
-          username: value.username,
-          email: value.email,
-          notifications: state.user.notifications,
-          expiration: value.expiration,
-          userQuestions: value.userQuestions,
-        })
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
+        );
 
-  useEffect(() => {
-    if (!state.user.notifications) {
-      setNotifications("none");
-    } else {
-      setNotifications("positive");
-    }
-  }, [state.user.notifications]);
+        setNotifications((prevNotifications) =>
+          prevNotifications.filter(
+            (notification) => notification._id !== notificationId
+          )
+        );
+
+        // Update localStorage
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        userData.notifications = notifications;
+        localStorage.setItem("user", JSON.stringify(userData));
+      } catch (error) {
+        console.error("Error deleting notification:", error);
+      }
+    },
+    [state.user.username, state.user.token, notifications]
+  );
 
   return (
     <div className="bg-white/20 rounded-xl overflow-x-hidden relative">
       <div className="flex items-center justify-between h-full px-5">
-        <div>
-          <QuestSearch />
-        </div>
+        <QuestSearch />
         <div className="flex flex-row justify-evenly items-center gap-x-5 h-full">
-          {dropdown && notifications === "none" && (
-            <div
-              className={`
-                      w-[35vw] h-[35vh] relative top-[120%] backdrop-blur-lg bg-white/40 overflow-y-scroll overflow-x-hidden
-                      rounded-xl z-50 transition-all ease-in-out duration-300 flex items-center justify-evenly
-                      `}
-            >
-              <h2 className="text-white text-lg">You have no notifications</h2>
-            </div>
-          )}
-          {alteredNot?.length}
-          <div
-            className={`${
-              dropdown
-                ? "opacity-100 -translate-x-52"
-                : "opacity-0 translate-x-[300%]"
-            } flex flex-col top-12 gap-y-3 w-[25vw] h-[35vh] fixed transition-all ease-in-out duration-300 bg-white/40 backdrop-blur-lg
-                    rounded-xl p-5 z-50 overflow-y-scroll`}
-          >
-            {dropdown &&
-              notifications === "positive" &&
-              alteredNot.map((notification, index) => {
-                return (
-                  <div
-                    className="flex flex-row gap-x-5 items-start justify-center"
-                    key={Math.random().toString(36)}
-                  >
-                    <div className="text-black/80">
-                      <Markup
-                        content={notification.body}
-                        key={Math.random().toString(36)}
-                      />
-                    </div>
-                    <button
-                      onClick={() => {
-                        handleDeleteNotification(
-                          state.user.notifications[index]
-                        );
-                      }}
-                      className="w-10 h-10 flex items-center justify-center bg-transparent p-0"
-                    >
-                      <BsX className="w-8 h-8 text-red-500" />
-                    </button>
-                  </div>
-                );
-              })}
-          </div>
+          <NotificationDropdown
+            dropdown={dropdown}
+            hasNotifications={hasNotifications}
+            notifications={notifications}
+            handleDeleteNotification={handleDeleteNotification}
+          />
           <button
             onClick={() => setDropdown((prev) => !prev)}
             className={`${
@@ -144,5 +83,66 @@ const Navbar = () => {
     </div>
   );
 };
+
+interface NotificationDropdownProps {
+  dropdown: boolean;
+  hasNotifications: boolean;
+  notifications: NotificationType[];
+  handleDeleteNotification: (notificationId: string) => Promise<void>;
+}
+
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
+  dropdown,
+  hasNotifications,
+  notifications,
+  handleDeleteNotification,
+}) => {
+  if (!dropdown) return null;
+
+  return (
+    <div
+      className={`
+      w-[25vw] h-[35vh] fixed top-12 -translate-x-52
+      bg-white/40 backdrop-blur-lg rounded-xl p-5 z-50 
+      overflow-y-scroll transition-all ease-in-out duration-300
+      ${dropdown ? "opacity-100" : "opacity-0 translate-x-[300%]"}
+    `}
+    >
+      {!hasNotifications ? (
+        <h2 className="text-white text-lg">You have no notifications</h2>
+      ) : (
+        notifications.map((notification) => (
+          <NotificationItem
+            key={notification._id}
+            notification={notification}
+            onDelete={() => handleDeleteNotification(notification._id)}
+          />
+        ))
+      )}
+    </div>
+  );
+};
+
+interface NotificationItemProps {
+  notification: NotificationType;
+  onDelete: () => void;
+}
+
+const NotificationItem: React.FC<NotificationItemProps> = ({
+  notification,
+  onDelete,
+}) => (
+  <div className="flex flex-row gap-x-5 items-start justify-center mb-3">
+    <div className="text-black/80">
+      <Markup content={notification.body} />
+    </div>
+    <button
+      onClick={onDelete}
+      className="w-10 h-10 flex items-center justify-center bg-transparent p-0"
+    >
+      <BsX className="w-8 h-8 text-red-500" />
+    </button>
+  </div>
+);
 
 export default Navbar;

@@ -2,7 +2,7 @@
 import * as Yup from "yup";
 
 export const loginSchema = Yup.object().shape({
-  username: Yup.string().required("Required"),
+  username: Yup.string().required("Username is Required"),
   password: Yup.string()
     .min(8, "Password is too short - should be 8 chars minimum.")
     .matches(/(?=.*[0-9])/, "Password must contain a number.")
@@ -13,7 +13,7 @@ export const signupSchema = Yup.object().shape({
   email: Yup.string()
     .email("Invalid email format")
     .required("Email is required"),
-  username: Yup.string().required("Required"),
+  username: Yup.string().required("Username is Required"),
   password: Yup.string()
     .min(8, "Password is too short - should be 8 chars minimum.")
     .matches(/(?=.*[0-9])/, "Password must contain a number.")

@@ -1,10 +1,9 @@
-import { Suspense, useContext } from "react";
+import { Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import LandingPage from "./LandingPage/LandingPage";
 import Loading from "./ui/Loading";
 import Login from "./Login/Login";
 import Dashboard from "./Dashboard/Dashboard";
-import { AuthContext } from "./contexts/AuthContext";
 import QuestionOverview from "./Dashboard/components/QuestionOverview/QuestionOverview";
 import TagOverview from "./Dashboard/components/Tag/TagOverview";
 import NewQuestion from "./Dashboard/NewQuestion/NewQuestion";
@@ -13,16 +12,11 @@ import "react-toastify/dist/ReactToastify.css";
 import Profile from "./Dashboard/Profile/Profile";
 import Chart from "./Dashboard/Charts/Chart";
 import BrowseSection from "./LandingPage/BrowseSection/BrowseSection";
+import { useAuth } from "./contexts/useAuth";
 /* import RouteLogger from "./ui/RouteLogger"; */
 
 function App() {
-  const authContext = useContext(AuthContext);
-
-  if (!authContext) {
-    return <Loading />;
-  }
-
-  const { state } = authContext;
+  const { state } = useAuth();
 
   return (
     <>

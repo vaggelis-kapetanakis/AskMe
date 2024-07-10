@@ -16,7 +16,7 @@ const Browse = () => {
   const fetchBrowseQuestions = async () => {
     try {
       await axios
-        .get(`https://askmeback.onrender.com/qanda/questions/browse`)
+        .get(import.meta.env.VITE_APP_BACKEND_URL + `/questions/browse`)
         .then((res) => {
           setBrowseQuestions(res.data);
         })
@@ -56,28 +56,27 @@ const Browse = () => {
                 Welcome to the browse section
               </h1>
               <div className="h-[70vh] overflow-y-scroll overflow-x-hidden flex flex-col gap-y-3 backdrop-blur-md">
-              {browseQuestions &&
-                browseQuestions.randomQuestions.map((question) => {
-                  return (
-                    <MainQuestion
-                      id={question._id}
-                      key={question._id}
-                      title={question.title}
-                      answerCount={question.answerCount}
-                      category={question.category}
-                      creator={question.creator}
-                      dateCreated={question.dateCreated}
-                      tags={question.tags}
-                      tagsObjId={question.tagsObjId}
-                      views={question.views}
-                      votes={question.votes}
-                      browse={true}
-                      onBrowseClick={() => handleQuestion(question)}
-                    />
-                  );
-                })}
-                
-                </div>
+                {browseQuestions &&
+                  browseQuestions.randomQuestions.map((question) => {
+                    return (
+                      <MainQuestion
+                        id={question._id}
+                        key={question._id}
+                        title={question.title}
+                        answerCount={question.answerCount}
+                        category={question.category}
+                        creator={question.creator}
+                        dateCreated={question.dateCreated}
+                        tags={question.tags}
+                        tagsObjId={question.tagsObjId}
+                        views={question.views}
+                        votes={question.votes}
+                        browse={true}
+                        onBrowseClick={() => handleQuestion(question)}
+                      />
+                    );
+                  })}
+              </div>
             </div>
           )}
           <div className="w-full h-full relative">

@@ -1,49 +1,18 @@
-import axios from "axios";
-import { useCallback, useContext, useMemo, useRef } from "react";
-import { AuthContext } from "../../contexts/AuthContext";
+import { useCallback, useMemo, useRef } from "react";
 import Loading from "../../ui/Loading";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { QuestionType } from "../../types/global";
 import MainQuestion from "../components/MainQuestion/MainQuestion";
 import ErrorModal from "../../ui/ErrorModal";
-
-const fetchQuestions = async ({
-  pageParam,
-  userToken,
-}: {
-  pageParam: number;
-  userToken: string;
-}) => {
-  const { data } = await axios.get(
-    `https://askmeback.onrender.com/qanda/questions/getlimit/${pageParam}`,
-    {
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
-    }
-  );
-  return data.questions;
-};
+import { useFetchInfiniteQuestions } from "../../utils/questionReqs";
+import { useAuth } from "../../contexts/useAuth";
 
 const MainInfScroll = () => {
   const observer = useRef<IntersectionObserver>();
-  const authContext = useContext(AuthContext);
-  if (!authContext) {
-    return <Loading />;
-  }
 
-  const { state } = authContext;
+  const { state } = useAuth();
 
   const { data, error, fetchNextPage, hasNextPage, isFetching, isLoading } =
-    useInfiniteQuery({
-      queryKey: ["fetchQuestions"],
-      initialPageParam: 0,
-      queryFn: ({ pageParam }) =>
-        fetchQuestions({ pageParam, userToken: state.user.token }),
-      getNextPageParam: (lastPage, allPages) => {
-        return lastPage.length ? allPages.length + 1 : undefined;
-      },
-    });
+    useFetchInfiniteQuestions(state.user.token);
 
   const lastElementRef = useCallback(
     (node: HTMLDivElement) => {
@@ -108,7 +77,7 @@ const MainInfScroll = () => {
             </div>
           ))}
         {isFetching && (
-          <div className="fixed z-50 bg-white/20 w-full h-full rounded-2xl flex items-center justify-center">
+          <div className="fixed z-50 bg-white/20 w-full h-[88%] rounded-2xl flex items-center justify-center">
             <Loading />
           </div>
         )}

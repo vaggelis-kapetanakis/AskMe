@@ -1,30 +1,25 @@
-import { useContext } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "../../Sidebar/Sidebar";
-import { AuthContext } from "../../../contexts/AuthContext";
 import Loading from "../../../ui/Loading";
-import { fetchTagById } from "../../../utils/questionReqs";
+import { useFetchTagById } from "../../../utils/questionReqs";
 import MainQuestion from "../MainQuestion/MainQuestion";
 import ErrorModal from "../../../ui/ErrorModal";
 import Navbar from "../../Navbar/Navbar";
+import { useAuth } from "../../../contexts/useAuth";
 
 const TagOverview = () => {
-  let { tagid } = useParams();
-  const authContext = useContext(AuthContext);
-  if (!authContext) {
-    return <Loading />;
-  }
-  if (!tagid) {
-    return;
-  }
-
-  const { state } = authContext;
+  const { tagid } = useParams();
+  const { state } = useAuth();
 
   const {
     data: tagData,
     error: tagError,
     isFetching: isFetchingTag,
-  } = fetchTagById(tagid, state.user.token);
+  } = useFetchTagById(tagid, state.user.token);
+
+  if (!tagid) {
+    return null;
+  }
 
   if (isFetchingTag) {
     return <Loading />;

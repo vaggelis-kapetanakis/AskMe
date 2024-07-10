@@ -6,7 +6,7 @@ export type AuthProps = {
   username: string;
   notifications: NotificationType[];
   email: string;
-  userQuestions: QuestionType[] | null;
+  userQuestions: QuestionType[] | undefined;
 };
 
 export type AuthAction =

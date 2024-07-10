@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -5,118 +6,136 @@ import {
   Legend,
   ChartData,
   ChartOptions,
+  TooltipItem,
 } from "chart.js";
-import { useEffect, useState } from "react";
 import { Pie } from "react-chartjs-2";
 import { isIterable } from "../../../../utils/isIterable";
 import Loading from "../../../../ui/Loading";
+import ErrorModal from "../../../../ui/ErrorModal";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const CategoryStats = () => {
-  const [chartData, setChartData] = useState<ChartData<"pie">>({
-    labels: [],
-    datasets: [],
-  });
+interface CategoryStat {
+  _id: string;
+  count: number;
+}
 
-  const chartDataTemp = localStorage.getItem("chartData");
-  if (!chartDataTemp) return;
-  const middleware = JSON.parse(chartDataTemp);
-
-  const fetching = async () => {
-    let dataNames = [];
-    let dataCategory = [];
-
-    if (isIterable(middleware.categoryStats)) {
-      for (const dataObj of middleware.categoryStats) {
-        dataNames.push(dataObj._id);
-        dataCategory.push(dataObj.count);
-      }
-    } else {
-      dataNames = [0];
-      dataCategory = [0];
-    }
-
-    setChartData({
-      labels: dataNames,
-      datasets: [
-        {
-          label: `Category:`,
-          data: dataCategory,
-          backgroundColor: [
-            "#83B2FF",
-            "#9BC1FF",
-            "#2477FF",
-            "#3C86FF",
-            "#5394FF",
-            "#6BA3FF",
-            "#38aaff",
-            "#42C0FB",
-            "#82CFFD",
-            "#67C8FF",
-            "#7EC0EE",
-            "#87CEFF",
-          ],
-          borderWidth: 2,
-          borderColor: "#fff",
-        },
-      ],
-    });
-  };
+const CategoryStats: React.FC = () => {
+  const [chartData, setChartData] = useState<ChartData<"pie"> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
-    fetching();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const fetchData = () => {
+      try {
+        const chartDataTemp = localStorage.getItem("chartData");
+        if (!chartDataTemp) {
+          setError("No chart data available");
+          return;
+        }
+
+        const middleware = JSON.parse(chartDataTemp);
+        const categoryStats = middleware.categoryStats as CategoryStat[];
+
+        if (!isIterable(categoryStats)) {
+          setChartData(createChartData(["No Data"], [0]));
+          return;
+        }
+
+        const { dataNames, dataCategory } = processCategoryStats(categoryStats);
+        setChartData(createChartData(dataNames, dataCategory));
+      } catch (err) {
+        setError("Failed to load chart data");
+        console.error(err);
+      }
+    };
+
+    fetchData();
+
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const options: ChartOptions<"pie"> = {
-    responsive: false,
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: function (tooltipItem) {
-            const title = tooltipItem.label;
-            const label =
-              chartData["datasets"][0]["data"][tooltipItem["dataIndex"]];
-            const dataset = chartData["datasets"][0];
-            const percent = Math.round(
-              (dataset["data"][tooltipItem["dataIndex"]] /
-                // @ts-ignore
-                tooltipItem.chart._metasets[0].total) *
-                100
-            );
-            return " " + title + ": " + label + " (" + percent + "%)";
-          },
-        },
-      },
-      legend: {
-        display: true,
-        position: "right",
-        labels: {
-          boxWidth: window.innerWidth > 480 ? 40 : 28,
-          font: {
-            size: window.innerWidth > 480 ? 14 : 8,
-          },
-        },
-      },
-    },
+  const processCategoryStats = (stats: CategoryStat[]) => {
+    const dataNames = stats.map((dataObj) => dataObj._id);
+    const dataCategory = stats.map((dataObj) => dataObj.count);
+    return { dataNames, dataCategory };
   };
+
+  const createChartData = (
+    labels: string[],
+    data: number[]
+  ): ChartData<"pie"> => ({
+    labels,
+    datasets: [
+      {
+        label: `Category:`,
+        data,
+        backgroundColor: [
+          "#83B2FF",
+          "#9BC1FF",
+          "#2477FF",
+          "#3C86FF",
+          "#5394FF",
+          "#6BA3FF",
+          "#38aaff",
+          "#42C0FB",
+          "#82CFFD",
+          "#67C8FF",
+          "#7EC0EE",
+          "#87CEFF",
+        ],
+        borderWidth: 2,
+        borderColor: "#fff",
+      },
+    ],
+  });
+
+  const options: ChartOptions<"pie"> = useMemo(
+    () => ({
+      responsive: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function (tooltipItem: TooltipItem<"pie">) {
+              if (!chartData) return "";
+              const dataset = chartData.datasets[0];
+              const total = dataset.data.reduce(
+                (acc, value) => acc + Number(value),
+                0
+              );
+              const value = Number(dataset.data[tooltipItem.dataIndex]);
+              const percent = Math.round((value / total) * 100);
+              return ` ${tooltipItem.label}: ${value} (${percent}%)`;
+            },
+          },
+        },
+        legend: {
+          display: true,
+          position: "right" as const,
+          labels: {
+            boxWidth: windowWidth > 480 ? 40 : 28,
+            font: {
+              size: windowWidth > 480 ? 14 : 8,
+            },
+          },
+        },
+      },
+    }),
+    [windowWidth, chartData]
+  );
+
+  if (error) return <ErrorModal message={error} />;
 
   return (
     <aside className="w-full p-3 bg-white rounded-2xl">
       <h3 className="text-black/70 text-xl pl-4 pb-3 pt-4">
         From all the questions we show the division of the categories
       </h3>
-      <br />
       <div className="w-full flex items-center justify-center">
         {chartData ? (
-          <Pie
-            data={chartData}
-            // @ts-ignore
-            options={options}
-            width={350}
-            height={350}
-          />
+          <Pie data={chartData} options={options} width={350} height={350} />
         ) : (
           <Loading />
         )}

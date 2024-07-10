@@ -18,14 +18,14 @@ interface AuthState {
 }
 
 type AuthAction =
-  | { type: "LOGIN"; payload: any }
+  | { type: "LOGIN"; payload: AuthProps }
   | { type: "LOGOUT" }
-  | { type: "SET_USER"; payload: any };
+  | { type: "SET_USER"; payload: AuthProps };
 
-interface AuthContextType {
+export interface AuthContextType {
   state: AuthState;
   dispatch: Dispatch<AuthAction>;
-  login: (userData: any) => void;
+  login: (userData: AuthProps) => void;
   logout: () => void;
 }
 
@@ -40,7 +40,7 @@ const initialState: AuthState = {
     email: "",
     token: "",
     username: "",
-    userQuestions: null,
+    userQuestions: undefined,
     notifications: [],
   },
 };
@@ -57,14 +57,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       return {
         ...state,
         isAuthenticated: false,
-        user: {
-          userId: "",
-          email: "",
-          token: "",
-          username: "",
-          userQuestions: null,
-          notifications: [],
-        },
+        user: initialState.user,
       };
     case "SET_USER":
       return {
@@ -80,39 +73,12 @@ export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
-const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const navigate = useNavigate();
   const chartContext = useContext(ChartContext);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      dispatch({ type: "SET_USER", payload: userData });
-      dispatch({ type: "LOGIN", payload: userData });
-      checkTokenExpiry();
-    }
-  }, [navigate]);
-
-  const checkTokenExpiry = useCallback(() => {
-    const tokenExpiryTime = 3600 * 1000; // 1 hour in milliseconds
-    const tokenExpiryDate = new Date().getTime() + tokenExpiryTime;
-
-    setTimeout(() => {
-      logout();
-      navigate("/");
-    }, tokenExpiryDate - new Date().getTime());
-  }, [navigate]);
-
-  const login = (userData: any) => {
-    dispatch({ type: "LOGIN", payload: userData });
-    localStorage.setItem("user", JSON.stringify(userData));
-    checkTokenExpiry();
-    navigate("/signedin");
-  };
-
-  const logout = () => {
+  const logout = useCallback(() => {
     dispatch({ type: "LOGOUT" });
     localStorage.removeItem("user");
     if (chartContext) {
@@ -120,13 +86,45 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     localStorage.removeItem("chartData");
     navigate("/");
+  }, [navigate, chartContext]);
+
+  const checkTokenExpiry = useCallback(() => {
+    const tokenExpiryTime = 3600 * 1000; // 1 hour in milliseconds
+    const tokenExpiryDate = new Date().getTime() + tokenExpiryTime;
+
+    setTimeout(() => {
+      logout();
+    }, tokenExpiryDate - new Date().getTime());
+  }, [logout]);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const userData: AuthProps = JSON.parse(storedUser);
+      dispatch({ type: "SET_USER", payload: userData });
+      dispatch({ type: "LOGIN", payload: userData });
+      checkTokenExpiry();
+    }
+  }, [checkTokenExpiry]);
+
+  const login = useCallback(
+    (userData: AuthProps) => {
+      dispatch({ type: "LOGIN", payload: userData });
+      localStorage.setItem("user", JSON.stringify(userData));
+      checkTokenExpiry();
+      navigate("/signedin");
+    },
+    [navigate, checkTokenExpiry]
+  );
+
+  const contextValue: AuthContextType = {
+    state,
+    dispatch,
+    login,
+    logout,
   };
 
   return (
-    <AuthContext.Provider value={{ state, dispatch, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
-
-export { AuthProvider };

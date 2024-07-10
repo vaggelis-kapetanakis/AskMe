@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useMemo } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import Navbar from "../Navbar/Navbar";
 import UserChartsTags from "./components/UserCharts/UserPieTagChart";
@@ -14,88 +15,103 @@ import CategoryExtraStats from "./components/Categories/CategoryExtraStats";
 import TagStats from "./components/TagCharts/TagStats";
 import TagVotesAnswersCharts from "./components/TagCharts/TagVotesAnswersCharts";
 
-const Chart = () => {
+interface ChartComponent {
+  Component: React.ComponentType;
+}
+
+interface ChartSection {
+  title: string;
+  components: ChartComponent[];
+}
+
+const Chart: React.FC = () => {
+  const [userHasChartData, setUserHasChartData] = useState<boolean>(false);
+
+  useEffect(() => {
+    const chartDataTemp = localStorage.getItem("chartData");
+    setUserHasChartData(!!chartDataTemp);
+  }, []);
+
+  const chartSections = useMemo(
+    () => [
+      {
+        title: "Your Stats",
+        components: [
+          { Component: UserQuestMonth },
+          { Component: UserChartsTags },
+          { Component: UserChartVotes },
+          { Component: UserChartsAnswerTags },
+        ],
+      },
+      {
+        title: "Regarding Questions",
+        components: [
+          { Component: QuestionCharts },
+          { Component: QuestionUpVotedCharts },
+          { Component: QuestionAnswerCharts },
+        ],
+      },
+      {
+        title: "Regarding Answers",
+        components: [
+          { Component: AnswerCharts },
+          { Component: AnswerUpVotedCharts },
+        ],
+      },
+      {
+        title: "Regarding Categories",
+        components: [
+          { Component: CategoryStats },
+          { Component: CategoryExtraStats },
+        ],
+      },
+      {
+        title: "Regarding Tags",
+        components: [
+          { Component: TagStats },
+          { Component: TagVotesAnswersCharts },
+        ],
+      },
+    ],
+    []
+  );
+
+  const renderChartSection = ({
+    title,
+    components,
+  }: ChartSection): JSX.Element => (
+    <div key={title} className="grid grid-rows[0.2fr_1.8fr] gap-y-3 mt-5">
+      <div className="w-full flex items-center justify-start p-3">
+        <h2 className="font-bold text-white text-4xl">{title}</h2>
+      </div>
+      <div className="rounded-xl relative grid grid-cols-2 grid-rows-1 gap-x-3 bg-white px-5">
+        {components.map(({ Component }, index) => (
+          <div key={index}>
+            <Component />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-screen h-screen bg-dashboard-bg flex justify-between pr-10">
       <Sidebar />
       <div className="w-[86%] h-full grid grid-rows-[0.05fr_0.95fr] gap-y-8">
         <Navbar />
-        <div className="backdrop-blur-md bg-white/20 rounded-xl relative overflow-y-scroll overflow-x-hidden h-full px-5">
-          <div className="grid grid-rows[0.2fr_1.8fr] gap-y-3 mt-5">
-            <div className="w-full flex items-center justify-start p-3">
-              <h2 className="font-bold text-white text-4xl">Your Stats</h2>
-            </div>
-            <div className="rounded-xl relative grid grid-cols-2 grid-rows-1 gap-x-3 bg-white px-5">
-              <div>
-                <UserQuestMonth />
-                <UserChartsTags />
-              </div>
-              <div>
-                <UserChartVotes />
-                <UserChartsAnswerTags />
-              </div>
-            </div>
+        {!userHasChartData ? (
+          <div className="backdrop-blur-md bg-white/20 rounded-xl relative overflow-y-scroll overflow-x-hidden h-full px-5 flex items-center justify-center">
+            <h1 className="text-black text-2xl bg-white/70 px-5 py-2 rounded-lg">
+
+            Looks like you don't have any chart Data yet! Start by generating
+            your own. Go and interact!
+            </h1>
           </div>
-          <div className="grid grid-rows[0.2fr_1.8fr] gap-y-3 mt-5">
-            <div className="w-full flex items-center justify-start p-3">
-              <h2 className="font-bold text-white text-4xl">
-                Regarding Questions
-              </h2>
-            </div>
-            <div className="rounded-xl relative grid grid-cols-2 grid-rows-1 gap-x-3 bg-white px-5">
-              <div>
-                <QuestionCharts />
-                <QuestionUpVotedCharts />
-              </div>
-              <div>
-                <QuestionAnswerCharts />
-              </div>
-            </div>
+        ) : (
+          <div className="backdrop-blur-md bg-white/20 rounded-xl relative overflow-y-scroll overflow-x-hidden h-full px-5">
+            {chartSections.map(renderChartSection)}
           </div>
-          <div className="grid grid-rows[0.2fr_1.8fr] gap-y-3 mt-5">
-            <div className="w-full flex items-center justify-start p-3">
-              <h2 className="font-bold text-white text-4xl">
-                Regarding Answers
-              </h2>
-            </div>
-            <div className="rounded-xl relative grid grid-cols-2 grid-rows-1 gap-x-3 bg-white px-5">
-              <div>
-                <AnswerCharts />
-              </div>
-              <div>
-                <AnswerUpVotedCharts />
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-rows[0.2fr_1.8fr] gap-y-3 mt-5">
-            <div className="w-full flex items-center justify-start p-3">
-              <h2 className="font-bold text-white text-4xl">
-                Regarding Answers
-              </h2>
-            </div>
-            <div className="rounded-xl relative grid grid-cols-2 grid-rows-1 gap-x-3 bg-white px-5">
-              <div>
-                <CategoryStats />
-              </div>
-              <div>
-                <CategoryExtraStats />
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-rows[0.2fr_1.8fr] gap-y-3 mt-5">
-            <div className="w-full flex items-center justify-start p-3">
-              <h2 className="font-bold text-white text-4xl">Regarding Tags</h2>
-            </div>
-            <div className="rounded-xl relative grid grid-cols-2 grid-rows-1 gap-x-3 bg-white px-5">
-              <div>
-                <TagStats />
-              </div>
-              <div>
-                <TagVotesAnswersCharts />
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -1,20 +1,14 @@
-import { useContext } from "react";
 import { MainQuestionTitleOnly } from "../components/MainQuestion/MainQuestion";
 import { QuestionType, TagType } from "../../types/global";
-import { AuthContext } from "../../contexts/AuthContext";
 import Loading from "../../ui/Loading";
 import ErrorModal from "../../ui/ErrorModal";
 import { usePopularTags, useTopQuestions } from "../../utils/questionReqs";
 import MainInfScroll from "./MainInfScroll";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../contexts/useAuth";
 
 const Main: React.FC = () => {
-  const authContext = useContext(AuthContext);
-  if (!authContext) {
-    return <Loading />;
-  }
-
-  const { state } = authContext;
+  const { state } = useAuth();
 
   const {
     data: topData,
